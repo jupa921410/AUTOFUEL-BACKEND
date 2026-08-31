@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">AutoFuel Cafe</title>
+  <desc id="desc">Red coffee cup with a white letter A</desc>
+  <rect width="128" height="128" rx="28" fill="#050505"/>
+  <path d="M28 37h62v40c0 17-13 30-30 30h-2c-17 0-30-13-30-30V37Z" fill="#dc2626"/>
+  <path d="M90 48h8c12 0 21 9 21 21s-9 21-21 21h-9V78h9a9 9 0 0 0 0-18h-8V48Z" fill="#dc2626"/>
+  <path d="m59 49-18 42h13l3-8h17l3 8h13L72 49H59Zm2 23 5-13 5 13H61Z" fill="#fff"/>
+  <path d="M46 16c-7 8 5 11-1 18M67 14c-7 8 5 11-1 18" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="6"/>
+</svg>
