@@ -17,7 +17,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 function imgSrc(image: string | null): string | null {
     if (!image) return null;
-    return `/storage/${image}`;
+
+    return image.startsWith('images/') ? `/${image}` : `/storage/${image}`;
 }
 
 type Props = {

@@ -6,6 +6,7 @@ declare global {
 
 type Props = {
     youtubeId: string;
+    playlistId?: string | null;
     width?: number | string;
     height?: number | string;
     autoMuteDuringAd?: boolean;
@@ -19,6 +20,7 @@ type Props = {
 
 const YouTubeAdAwarePlayer = forwardRef(({
     youtubeId,
+    playlistId = null,
     width = '100%',
     height = 360,
     autoMuteDuringAd = true,
@@ -60,13 +62,18 @@ const YouTubeAdAwarePlayer = forwardRef(({
             playerRef.current = new window.YT.Player(containerRef.current!.id, {
                 height: String(height),
                 width: String(width),
-                videoId: youtubeId,
+                // When a playlist is present, load it via playerVars instead of a single videoId
+                // so the player advances through every song in the list.
+                ...(playlistId ? {} : { videoId: youtubeId }),
                 playerVars: {
                     rel: 0,
                     modestbranding: 1,
                     enablejsapi: 1,
                     playsinline: 1,
                     autoplay: autoplay ? 1 : 0,
+                    ...(playlistId
+                        ? { listType: 'playlist', list: playlistId }
+                        : {}),
                 },
                 events: {
                     onReady: (e: any) => {
@@ -138,7 +145,10 @@ const YouTubeAdAwarePlayer = forwardRef(({
                 if (!playerRef.current && containerRef.current) {
                     const iframe = document.createElement('iframe');
                     const autoplayParam = autoplay ? '1' : '0';
-                    iframe.src = `https://www.youtube.com/embed/${youtubeId}?autoplay=${autoplayParam}&mute=1&playsinline=1&rel=0&enablejsapi=1`;
+                    const src = playlistId
+                        ? `https://www.youtube.com/embed/videoseries?list=${playlistId}&autoplay=${autoplayParam}&mute=1&playsinline=1&rel=0&enablejsapi=1`
+                        : `https://www.youtube.com/embed/${youtubeId}?autoplay=${autoplayParam}&mute=1&playsinline=1&rel=0&enablejsapi=1`;
+                    iframe.src = src;
                     iframe.width = String(width);
                     iframe.height = String(height);
                     iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
@@ -157,7 +167,7 @@ const YouTubeAdAwarePlayer = forwardRef(({
             clearTimeout(fallbackTimer);
             if (playerRef.current && playerRef.current.destroy) playerRef.current.destroy();
         };
-    }, [youtubeId, width, height, autoMuteDuringAd, checkIntervalMs, autoplay]);
+    }, [youtubeId, playlistId, width, height, autoMuteDuringAd, checkIntervalMs, autoplay]);
 
     return (
         <div className={className} style={{ position: 'relative' }}>

@@ -32,7 +32,10 @@ class PostApiController extends Controller
     private function imageUrl(?string $image): ?string
     {
         if (!$image) return null;
-        return asset('storage/' . $image);
+
+        return str_starts_with($image, 'images/')
+            ? asset($image)
+            : asset('storage/' . $image);
     }
 
     private function formatPost(Post $post): array

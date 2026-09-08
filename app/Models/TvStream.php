@@ -27,9 +27,4 @@ class TvStream extends Model
     {
         return $this->belongsTo(PromotionGroup::class, 'promotion_group_id');
     }
-
-    public function getRouteKeyName(): string
-    {
-        return 'slug';
-    }
 }

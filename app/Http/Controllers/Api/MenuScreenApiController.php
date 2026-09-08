@@ -24,8 +24,15 @@ class MenuScreenApiController extends Controller
     {
         $screen = MenuScreen::where('slug', $slug)
             ->where('active', true)
-            ->with(['categories.products' => fn ($query) => $query->orderBy('name')])
+            ->with([
+                'categories.products' => fn ($query) => $query->orderBy('name'),
+                'products' => fn ($query) => $query->orderByPivot('position'),
+            ])
             ->firstOrFail();
+
+        // Products explicitly picked for this screen, grouped by their category. A
+        // category with no picks here just falls back to every product it has.
+        $pickedByCategory = $screen->products->groupBy('category_id');
 
         return response()->json([
             'data' => [
@@ -34,19 +41,28 @@ class MenuScreenApiController extends Controller
                 'slug' => $screen->slug,
                 'description' => $screen->description,
                 'position' => $screen->position,
-                'categories' => $screen->categories->map(fn ($category) => [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'description' => $category->description,
-                    'position' => (int) $category->pivot->position,
-                    'products' => $category->products->map(fn (Product $product) => [
-                        'id' => $product->id,
-                        'name' => $product->name,
-                        'description' => $product->description,
-                        'price' => (float) $product->price,
-                        'image' => $this->imageUrl($product->image),
-                    ])->values(),
-                ])->values(),
+                'show_info_widget' => (bool) $screen->show_info_widget,
+                'categories' => $screen->categories->map(function ($category) use ($pickedByCategory) {
+                    $picked = $pickedByCategory->get($category->id);
+                    $products = $picked && $picked->isNotEmpty() ? $picked : $category->products;
+
+                    return [
+                        'id' => $category->id,
+                        'name' => $category->name,
+                        'description' => $category->description,
+                        'position' => (int) $category->pivot->position,
+                        // 'list' (default) renders the usual text column; 'slider' renders
+                        // a full-column rotating photo carousel of this category's products.
+                        'layout' => $category->pivot->layout ?? 'list',
+                        'products' => $products->map(fn (Product $product) => [
+                            'id' => $product->id,
+                            'name' => $product->name,
+                            'description' => $product->description,
+                            'price' => (float) $product->price,
+                            'image' => $this->imageUrl($product->image),
+                        ])->values(),
+                    ];
+                })->values(),
             ],
         ]);
     }

@@ -31,8 +31,20 @@ type PromotionForm = {
     active: boolean;
     media: File | null;
     youtube_url?: string;
+    text_position: string;
 };
 
+const textPositionOptions = [
+    { value: 'top-left', label: 'Top left' },
+    { value: 'top-center', label: 'Top center' },
+    { value: 'top-right', label: 'Top right' },
+    { value: 'center-left', label: 'Center left' },
+    { value: 'center', label: 'Center' },
+    { value: 'center-right', label: 'Center right' },
+    { value: 'bottom-left', label: 'Bottom left' },
+    { value: 'bottom-center', label: 'Bottom center' },
+    { value: 'bottom-right', label: 'Bottom right' },
+];
 
 const emptyForm: PromotionForm = {
     promotion_group_id: '',
@@ -44,6 +56,7 @@ const emptyForm: PromotionForm = {
     active: true,
     media: null,
     youtube_url: '',
+    text_position: 'center',
 };
 
 type MediaPreview = { url: string; type: 'image' | 'video' } | null;
@@ -146,6 +159,7 @@ export default function PromotionsIndex({ promotions, promotionGroups }: Props) 
             end_date: promo.end_date,
             active: promo.active,
             media: null,
+            text_position: promo.text_position || 'center',
         });
     }
 
@@ -358,6 +372,19 @@ export default function PromotionsIndex({ promotions, promotionGroups }: Props) 
                                     onChange={e => createForm.setData('description', e.target.value)}
                                 />
                             </div>
+                            <div className="col-span-2 space-y-1.5">
+                                <Label>Text position on TV</Label>
+                                <select
+                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                                    value={createForm.data.text_position}
+                                    onChange={e => createForm.setData('text_position', e.target.value)}
+                                >
+                                    {textPositionOptions.map(option => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
+                                </select>
+                                {createForm.errors.text_position && <p className="text-destructive text-xs">{createForm.errors.text_position}</p>}
+                            </div>
                             <div className="space-y-1.5">
                                 <Label>Descuento (%) *</Label>
                                 <Input
@@ -469,6 +496,19 @@ export default function PromotionsIndex({ promotions, promotionGroups }: Props) 
                                     value={editForm.data.description}
                                     onChange={e => editForm.setData('description', e.target.value)}
                                 />
+                            </div>
+                            <div className="col-span-2 space-y-1.5">
+                                <Label>Text position on TV</Label>
+                                <select
+                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                                    value={editForm.data.text_position}
+                                    onChange={e => editForm.setData('text_position', e.target.value)}
+                                >
+                                    {textPositionOptions.map(option => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
+                                </select>
+                                {editForm.errors.text_position && <p className="text-destructive text-xs">{editForm.errors.text_position}</p>}
                             </div>
                             <div className="space-y-1.5">
                                 <Label>Descuento (%) *</Label>

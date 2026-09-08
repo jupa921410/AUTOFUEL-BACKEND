@@ -11,6 +11,22 @@ use Illuminate\Http\Request;
 class PromotionApiController extends Controller
 {
     /**
+     * GET /api/v1/promotions/groups
+     * Returns the active promotion groups available to TV screens.
+     */
+    public function groups(): JsonResponse
+    {
+        $groups = PromotionGroup::where('active', true)
+            ->withCount('promotions')
+            ->orderBy('name')
+            ->get(['id', 'name', 'slug', 'description', 'active']);
+
+        return response()->json([
+            'data' => $groups,
+        ]);
+    }
+
+    /**
      * GET /api/v1/promotions/{group}
      * Returns all promotions belonging to the given group slug.
      * Optional ?active=true filters only current active promotions.
@@ -62,6 +78,7 @@ class PromotionApiController extends Controller
             'active'              => $promotion->active,
             'media_type'          => $promotion->media_type ?? 'image',
             'image'               => $this->imageUrl($promotion->image),
+            'text_position'       => $promotion->text_position ?? 'center',
         ];
     }
 }

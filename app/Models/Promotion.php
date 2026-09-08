@@ -18,6 +18,7 @@ class Promotion extends Model
         'image',
         'media_type',
         'youtube_id',
+        'text_position',
     ];
 
     protected $casts = [

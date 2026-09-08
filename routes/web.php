@@ -42,7 +42,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('products', ProductController::class)->except(['create', 'edit', 'show']);
     Route::resource('promotions', PromotionController::class)->except(['create', 'edit', 'show']);
     Route::resource('promotion-groups', PromotionGroupController::class)->except(['create', 'edit', 'show']);
-    Route::resource('streamen', TvStreamController::class)->except(['create', 'edit', 'show']);
+    // "streamen" isn't real English, so Laravel's inflector mis-singularizes it to
+    // "streaman" (like policemen→policeman) and the {streaman} route parameter no longer
+    // matches the controller's $streamen argument, breaking implicit model binding on
+    // update/destroy. Pin the parameter name explicitly to keep it as "streamen".
+    Route::resource('streamen', TvStreamController::class)
+        ->parameters(['streamen' => 'streamen'])
+        ->except(['create', 'edit', 'show']);
     Route::resource('menu-screens', MenuScreenController::class)->except(['create', 'edit', 'show']);
 
     // Accounting

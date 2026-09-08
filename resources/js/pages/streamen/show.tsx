@@ -35,6 +35,12 @@ function extractYouTubeId(url: string): string | null {
     return null;
 }
 
+function extractYouTubePlaylistId(url: string): string | null {
+    if (!url) return null;
+    const m = url.match(/[?&]list=([A-Za-z0-9_-]+)/);
+    return m ? m[1] : null;
+}
+
 export default function StreamenShow({ stream }: Props) {
     const [promotions, setPromotions] = useState<any[]>([]);
     const [open, setOpen] = useState(false);
@@ -43,6 +49,7 @@ export default function StreamenShow({ stream }: Props) {
     const [nextAdSeconds, setNextAdSeconds] = useState<number>(stream.ad_interval_seconds);
     const playerRef = useRef<any>(null);
     const youtubeId = extractYouTubeId(stream.youtube_url);
+    const playlistId = extractYouTubePlaylistId(stream.youtube_url);
 
     useEffect(() => {
         function updateSize() {
@@ -121,11 +128,12 @@ export default function StreamenShow({ stream }: Props) {
                 </div>
 
                 <div className="flex-1 flex items-center justify-center">
-                    {youtubeId ? (
+                    {(youtubeId || playlistId) ? (
                         <div className="w-full h-full">
                             <YouTubeAdAwarePlayer
                                 ref={playerRef}
-                                youtubeId={youtubeId}
+                                youtubeId={youtubeId ?? ''}
+                                playlistId={playlistId}
                                 height={height || 720}
                                 onAdEnd={onAdEnd}
                                 autoplay={true}

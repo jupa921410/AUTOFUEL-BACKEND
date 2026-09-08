@@ -43,6 +43,7 @@ export type Promotion = {
     image: string | null;
     media_type: 'image' | 'video';
     youtube_id: string | null;
+    text_position: string;
     created_at: string;
     updated_at: string;
 };

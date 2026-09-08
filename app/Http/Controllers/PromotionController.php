@@ -12,6 +12,12 @@ use Inertia\Response;
 
 class PromotionController extends Controller
 {
+    private const TEXT_POSITIONS = [
+        'top-left', 'top-center', 'top-right',
+        'center-left', 'center', 'center-right',
+        'bottom-left', 'bottom-center', 'bottom-right',
+    ];
+
     public function index(): Response
     {
         return Inertia::render('promotions/index', [
@@ -32,6 +38,7 @@ class PromotionController extends Controller
             'active'             => ['boolean'],
             'media'              => ['nullable', 'file', 'mimetypes:image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm', 'max:51200'],
             'youtube_url'        => ['nullable', 'string'],
+            'text_position'      => ['required', 'string', 'in:' . implode(',', self::TEXT_POSITIONS)],
         ]);
 
         if ($request->hasFile('media')) {
@@ -70,6 +77,7 @@ class PromotionController extends Controller
             'active'             => ['boolean'],
             'media'              => ['nullable', 'file', 'mimetypes:image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm', 'max:51200'],
             'youtube_url'        => ['nullable', 'string'],
+            'text_position'      => ['required', 'string', 'in:' . implode(',', self::TEXT_POSITIONS)],
         ]);
 
         if ($request->hasFile('media')) {

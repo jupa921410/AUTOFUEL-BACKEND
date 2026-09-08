@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\AuthApiController;
 use App\Http\Controllers\Api\HorarioApiController;
 use App\Http\Controllers\Api\InventoryApiController;
 use App\Http\Controllers\Api\MenuScreenApiController;
+use App\Http\Controllers\Api\StreamApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,8 @@ use App\Http\Controllers\Api\MenuScreenApiController;
 | GET  /api/v1/products                   ?category_id= &category= &search=
 | GET  /api/v1/products/{id}
 | GET  /api/v1/promotions/{group}         ?active=true  (por slug de grupo)
+| GET  /api/v1/streams                    — TV streams activos (YouTube)
+| GET  /api/v1/streams/{slug}             — TV stream por slug
 | GET  /api/v1/caterings
 | POST /api/v1/catering-orders            — legacy (sin pago)
 | POST /api/v1/catering-checkout          — crea orden + sesión Stripe
@@ -57,7 +60,11 @@ Route::prefix('v1')->group(function () {
     Route::get('toast/products/{idOrGuid}', [ToastProductApiController::class, 'show']);
     Route::get('toast/categories', [ToastProductApiController::class, 'categories']);
 
+    Route::get('promotions/groups', [PromotionApiController::class, 'groups']);
     Route::get('promotions/{group}', [PromotionApiController::class, 'byGroup']);
+
+    Route::get('streams', [StreamApiController::class, 'index']);
+    Route::get('streams/{slug}', [StreamApiController::class, 'show']);
 
     Route::get('caterings', [CateringApiController::class, 'index']);
 
