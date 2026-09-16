@@ -6,6 +6,16 @@ export type Category = {
     updated_at: string;
 };
 
+export type ProductSize = {
+    id: number;
+    product_id: number;
+    label: string;
+    price: string;
+    sort_order: number;
+    created_at: string;
+    updated_at: string;
+};
+
 export type Product = {
     id: number;
     category_id: number;
@@ -15,6 +25,7 @@ export type Product = {
     price: string;
     image: string | null;
     featured: boolean;
+    sizes?: ProductSize[];
     created_at: string;
     updated_at: string;
 };

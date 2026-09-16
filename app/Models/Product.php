@@ -31,4 +31,9 @@ class Product extends Model
     {
         return $this->hasMany(ProductIngredient::class);
     }
+
+    public function sizes()
+    {
+        return $this->hasMany(ProductSize::class)->orderBy('sort_order');
+    }
 }

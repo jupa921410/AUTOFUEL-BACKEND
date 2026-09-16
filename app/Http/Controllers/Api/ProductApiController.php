@@ -11,7 +11,7 @@ class ProductApiController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Product::with('category')->orderBy('name');
+        $query = Product::with('category', 'sizes')->orderBy('name');
 
         // Filter by category id
         if ($request->has('category_id')) {
@@ -41,7 +41,7 @@ class ProductApiController extends Controller
 
     public function featured(): JsonResponse
     {
-        $products = Product::with('category')
+        $products = Product::with('category', 'sizes')
             ->where('featured', true)
             ->orderBy('name')
             ->get()
@@ -52,7 +52,7 @@ class ProductApiController extends Controller
 
     public function show(Product $product): JsonResponse
     {
-        $product->load('category');
+        $product->load('category', 'sizes');
 
         return response()->json(['data' => $this->formatProduct($product)]);
     }
@@ -72,6 +72,14 @@ class ProductApiController extends Controller
     {
         $image = $this->imageUrl($product->image);
 
+        $sizes = $product->relationLoaded('sizes')
+            ? $product->sizes->map(fn($s) => [
+                'id'    => $s->id,
+                'label' => $s->label,
+                'price' => (float) $s->price,
+            ])->values()->all()
+            : [];
+
         return [
             'id'            => $product->id,
             'name'          => $product->name,
@@ -83,6 +91,8 @@ class ProductApiController extends Controller
             'category'      => $product->category?->name,
             'category_name' => $product->category?->name,
             'featured'      => $product->featured,
+            'sizes'         => $sizes,
         ];
     }
 }
+

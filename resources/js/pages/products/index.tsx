@@ -1,6 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import { Head } from '@inertiajs/react';
-import { PencilIcon, PlusIcon, StarIcon, TrashIcon } from 'lucide-react';
+import { PencilIcon, PlusIcon, StarIcon, TrashIcon, XIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { BreadcrumbItem, Category, Product } from '@/types';
+import type { BreadcrumbItem, Category, Product, ProductSize } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -25,6 +25,11 @@ function imgSrc(image: string | null): string | null {
     return `/storage/${image}`;
 }
 
+type SizeRow = {
+    label: string;
+    price: string;
+};
+
 type Props = {
     products: Product[];
     categories: Category[];
@@ -37,8 +42,103 @@ type ProductForm = {
     price: string;
     image: File | null;
     featured: boolean;
+    sizes: SizeRow[];
 };
 
+// ─── Size editor sub-component ────────────────────────────────────────────────
+function SizesEditor({
+    sizes,
+    onChange,
+}: {
+    sizes: SizeRow[];
+    onChange: (sizes: SizeRow[]) => void;
+}) {
+    function addRow() {
+        onChange([...sizes, { label: '', price: '' }]);
+    }
+
+    function updateRow(idx: number, field: keyof SizeRow, value: string) {
+        const next = sizes.map((r, i) => (i === idx ? { ...r, [field]: value } : r));
+        onChange(next);
+    }
+
+    function removeRow(idx: number) {
+        onChange(sizes.filter((_, i) => i !== idx));
+    }
+
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Sizes &amp; Prices</Label>
+                <Button type="button" size="sm" variant="outline" onClick={addRow}>
+                    <PlusIcon className="mr-1 h-3.5 w-3.5" />
+                    Add size
+                </Button>
+            </div>
+
+            {sizes.length === 0 && (
+                <p className="text-muted-foreground text-xs italic py-1">
+                    No sizes added — use the single price field above, or add sizes below.
+                </p>
+            )}
+
+            {sizes.map((row, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                    <Input
+                        placeholder="16OZ"
+                        value={row.label}
+                        onChange={e => updateRow(idx, 'label', e.target.value)}
+                        className="flex-1"
+                    />
+                    <div className="relative flex-1">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                        <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={row.price}
+                            onChange={e => updateRow(idx, 'price', e.target.value)}
+                            className="pl-6"
+                        />
+                    </div>
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => removeRow(idx)}
+                    >
+                        <XIcon className="h-4 w-4" />
+                    </Button>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+// ─── Sizes display badge ───────────────────────────────────────────────────────
+function SizesBadges({ sizes, fallbackPrice }: { sizes?: ProductSize[]; fallbackPrice: string }) {
+    if (!sizes || sizes.length === 0) {
+        return <span className="font-semibold">${Number(fallbackPrice).toFixed(2)}</span>;
+    }
+    return (
+        <div className="flex flex-wrap gap-1">
+            {sizes.map(s => (
+                <span
+                    key={s.id}
+                    className="inline-flex items-center gap-0.5 rounded-md bg-muted px-2 py-0.5 text-xs font-medium"
+                >
+                    <span className="text-muted-foreground">{s.label}</span>
+                    <span className="mx-0.5 text-muted-foreground/50">·</span>
+                    <span>${Number(s.price).toFixed(2)}</span>
+                </span>
+            ))}
+        </div>
+    );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function ProductsIndex({ products, categories }: Props) {
     const [openCreate, setOpenCreate] = useState(false);
     const [editTarget, setEditTarget] = useState<Product | null>(null);
@@ -55,6 +155,7 @@ export default function ProductsIndex({ products, categories }: Props) {
         price: '',
         image: null,
         featured: false,
+        sizes: [],
     });
 
     const editForm = useForm<ProductForm>({
@@ -64,6 +165,7 @@ export default function ProductsIndex({ products, categories }: Props) {
         price: '',
         image: null,
         featured: false,
+        sizes: [],
     });
 
     const deleteForm = useForm({});
@@ -78,6 +180,7 @@ export default function ProductsIndex({ products, categories }: Props) {
             price: product.price,
             image: null,
             featured: product.featured,
+            sizes: (product.sizes ?? []).map(s => ({ label: s.label, price: s.price })),
         });
     }
 
@@ -112,6 +215,7 @@ export default function ProductsIndex({ products, categories }: Props) {
         createForm.transform((data) => {
             const payload = { ...data } as Record<string, unknown>;
             if (!payload.image) delete payload.image;
+            if ((payload.sizes as SizeRow[]).length === 0) delete payload.sizes;
             return payload as typeof data;
         });
         createForm.post('/products', {
@@ -183,7 +287,7 @@ export default function ProductsIndex({ products, categories }: Props) {
                                 <th className="px-4 py-3 text-left font-semibold">Image</th>
                                 <th className="px-4 py-3 text-left font-semibold">Name</th>
                                 <th className="px-4 py-3 text-left font-semibold">Category</th>
-                                <th className="px-4 py-3 text-left font-semibold">Price</th>
+                                <th className="px-4 py-3 text-left font-semibold">Price / Sizes</th>
                                 <th className="px-4 py-3 text-left font-semibold">Featured</th>
                                 <th className="px-4 py-3 text-right font-semibold">Actions</th>
                             </tr>
@@ -218,7 +322,9 @@ export default function ProductsIndex({ products, categories }: Props) {
                                         )}
                                     </td>
                                     <td className="px-4 py-3 text-muted-foreground">{product.category?.name ?? '—'}</td>
-                                    <td className="px-4 py-3 font-semibold">${Number(product.price).toFixed(2)}</td>
+                                    <td className="px-4 py-3">
+                                        <SizesBadges sizes={product.sizes} fallbackPrice={product.price} />
+                                    </td>
                                     <td className="px-4 py-3">
                                         {product.featured ? (
                                             <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
@@ -247,7 +353,7 @@ export default function ProductsIndex({ products, categories }: Props) {
 
             {/* Create Dialog */}
             <Dialog open={openCreate} onOpenChange={setOpenCreate}>
-                <DialogContent className="sm:max-w-lg">
+                <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>New Product</DialogTitle>
                         <DialogDescription>Enter the details to add a new product.</DialogDescription>
@@ -278,7 +384,7 @@ export default function ProductsIndex({ products, categories }: Props) {
                                 <Input id="c-desc" value={createForm.data.description} onChange={e => createForm.setData('description', e.target.value)} />
                             </div>
                             <div className="space-y-1.5">
-                                <Label htmlFor="c-price">Price *</Label>
+                                <Label htmlFor="c-price">Base Price <span className="text-muted-foreground text-xs">(optional if sizes defined)</span></Label>
                                 <Input id="c-price" type="number" min="0" step="0.01" value={createForm.data.price} onChange={e => createForm.setData('price', e.target.value)} />
                                 {createForm.errors.price && <p className="text-destructive text-xs">{createForm.errors.price}</p>}
                             </div>
@@ -290,6 +396,14 @@ export default function ProductsIndex({ products, categories }: Props) {
                             <div className="col-span-2 flex items-center gap-2 rounded-lg border p-3">
                                 <Checkbox id="c-featured" checked={createForm.data.featured} onCheckedChange={checked => createForm.setData('featured', checked === true)} />
                                 <Label htmlFor="c-featured" className="cursor-pointer">Featured Product</Label>
+                            </div>
+
+                            {/* Sizes */}
+                            <div className="col-span-2 rounded-lg border p-3 space-y-2 bg-muted/30">
+                                <SizesEditor
+                                    sizes={createForm.data.sizes}
+                                    onChange={rows => createForm.setData('sizes', rows)}
+                                />
                             </div>
                         </div>
                         {createPreview && (
@@ -305,7 +419,7 @@ export default function ProductsIndex({ products, categories }: Props) {
 
             {/* Edit Dialog */}
             <Dialog open={!!editTarget} onOpenChange={v => !v && setEditTarget(null)}>
-                <DialogContent className="sm:max-w-lg">
+                <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Edit Product</DialogTitle>
                         <DialogDescription>Update the product details.</DialogDescription>
@@ -336,7 +450,7 @@ export default function ProductsIndex({ products, categories }: Props) {
                                 <Input value={editForm.data.description} onChange={e => editForm.setData('description', e.target.value)} />
                             </div>
                             <div className="space-y-1.5">
-                                <Label>Price *</Label>
+                                <Label>Base Price <span className="text-muted-foreground text-xs">(optional if sizes defined)</span></Label>
                                 <Input type="number" min="0" step="0.01" value={editForm.data.price} onChange={e => editForm.setData('price', e.target.value)} />
                                 {editForm.errors.price && <p className="text-destructive text-xs">{editForm.errors.price}</p>}
                             </div>
@@ -348,6 +462,14 @@ export default function ProductsIndex({ products, categories }: Props) {
                             <div className="col-span-2 flex items-center gap-2 rounded-lg border p-3">
                                 <Checkbox id="e-featured" checked={editForm.data.featured} onCheckedChange={checked => editForm.setData('featured', checked === true)} />
                                 <Label htmlFor="e-featured" className="cursor-pointer">Featured Product</Label>
+                            </div>
+
+                            {/* Sizes */}
+                            <div className="col-span-2 rounded-lg border p-3 space-y-2 bg-muted/30">
+                                <SizesEditor
+                                    sizes={editForm.data.sizes}
+                                    onChange={rows => editForm.setData('sizes', rows)}
+                                />
                             </div>
                         </div>
                         {editPreview && (
